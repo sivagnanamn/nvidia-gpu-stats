@@ -1,28 +1,106 @@
+// ================================================================================================
+// A simple script to get memory usage & properties of CUDA supported NVIDIA devices
+//
+// Author: Sivagnanam Namasivayamurthy
+//
+// ================================================================================================
+
 #include <stdio.h>
 
-// Print device properties
-void printDevProp(cudaDeviceProp devProp)
+// CUDA C headers
+#include <cuda.h>
+#include <cuda_runtime.h>
+
+/*
+ * Get number of CUDA supported devices available
+ *
+ * returns: the number of CUDA supported devices
+ */
+int getCudaDevicesCount(){
+
+  int deviceCount;
+
+  cudaError_t cu_err = cudaGetDeviceCount(&deviceCount);
+  if(cudaSuccess != cu_err){
+    printf("Unable to get cudaGetDeviceCount : error num %d - %s\n", (int) cu_err, cudaGetErrorString(cu_err));
+    exit(EXIT_FAILURE);
+  }
+  return deviceCount;
+}
+
+/*
+ * Print the number of CUDA supported devices available
+ */
+void printDevicesCount(){
+
+  int deviceCount = getCudaDevicesCount();
+
+  if(0 == deviceCount){
+    printf("No CUDA supported device(s) found !!! \n");
+    exit(EXIT_FAILURE);
+  } else {
+    printf("Found %d CUDA supported device(s)\n", deviceCount);
+  }
+}
+
+/*
+ * Get device properties
+ *
+ * deviceId : ID of the CUDA supported device
+
+ * returns: the cudaDeviceProp struct that contains the CUDA device properties
+ */
+cudaDeviceProp getCudaDeviceProps(int deviceId){
+
+  cudaDeviceProp deviceProps;
+
+  cudaError_t cu_err = cudaGetDeviceProperties(&deviceProps, deviceId);
+  if(cudaSuccess != cu_err){
+    printf("Unable to get cudaGetDeviceProperties for device ID %d : error num %d - %s\n", deviceId, (int) cu_err, cudaGetErrorString(cu_err));
+    exit(EXIT_FAILURE);
+  }
+
+  return deviceProps;
+}
+
+/*
+ * Print the CUDA device properties
+ *
+ * deviceId: ID of the CUDA supported device
+ */
+void printCudaDeviceProps(int deviceId)
 {
-    printf("Major revision number:         %d\n",  devProp.major);
-    printf("Minor revision number:         %d\n",  devProp.minor);
-    printf("Name:                          %s\n",  devProp.name);
-    printf("Total global memory:           %lu\n",  devProp.totalGlobalMem);
-    printf("Total shared memory per block: %lu\n",  devProp.sharedMemPerBlock);
-    printf("Total registers per block:     %d\n",  devProp.regsPerBlock);
-    printf("Warp size:                     %d\n",  devProp.warpSize);
-    printf("Maximum memory pitch:          %lu\n",  devProp.memPitch);
-    printf("Maximum threads per block:     %d\n",  devProp.maxThreadsPerBlock);
-    for (int i = 0; i < 3; ++i)
-    printf("Maximum dimension %d of block:  %d\n", i, devProp.maxThreadsDim[i]);
-    for (int i = 0; i < 3; ++i)
-    printf("Maximum dimension %d of grid:   %d\n", i, devProp.maxGridSize[i]);
-    printf("Clock rate:                    %d\n",  devProp.clockRate);
-    printf("Total constant memory:         %lu\n",  devProp.totalConstMem);
-    printf("Texture alignment:             %lu\n",  devProp.textureAlignment);
-    printf("Concurrent copy and execution: %s\n",  (devProp.deviceOverlap ? "Yes" : "No"));
-    printf("Number of multiprocessors:     %d\n",  devProp.multiProcessorCount);
-    printf("Kernel execution timeout:      %s\n",  (devProp.kernelExecTimeoutEnabled ? "Yes" : "No"));
-    return;
+  cudaDeviceProp deviceProps = getCudaDeviceProps(deviceId);
+  printf("\n Device ID: %d       Name:      %s\n",  deviceId, deviceProps.name);
+  printf("--------------------------------------------------------------\n");
+  printf("CUDA capability Major/Minor version number:         %d.%d\n",  deviceProps.major, deviceProps.minor);
+  printf("Total global memory:                                %0.f MB\n", (float)deviceProps.totalGlobalMem/(1048576.0f));
+  printf("Total shared memory per block:                      %lu bytes\n", deviceProps.sharedMemPerBlock);
+  printf("Total registers per block:                          %d\n",  deviceProps.regsPerBlock);
+  printf("Warp size:                                          %d\n",  deviceProps.warpSize);
+  printf("Maximum memory pitch:                               %lu bytes\n", deviceProps.memPitch);
+  printf("Maximum threads per block:                          %d\n",  deviceProps.maxThreadsPerBlock);
+  printf("Maximum sizes of each dimension of a block:         %d x %d x %d \n", deviceProps.maxThreadsDim[0], deviceProps.maxThreadsDim[1], deviceProps.maxThreadsDim[2]);
+  printf("Maximum sizes of each dimension of a grid:          %d x %d x %d  \n", deviceProps.maxGridSize[0], deviceProps.maxGridSize[1], deviceProps.maxGridSize[2]);
+  printf("Clock rate:                                         %d\n",  deviceProps.clockRate);
+  printf("Total constant memory:                              %lu\n", deviceProps.totalConstMem);
+  printf("Texture alignment:                                  %lu bytes\n", deviceProps.textureAlignment);
+  printf("Concurrent copy and execution:                      %s\n",  (deviceProps.deviceOverlap ? "Yes" : "No"));
+  printf("Number of multiprocessors:                          %d\n",  deviceProps.multiProcessorCount);
+  printf("Kernel execution timeout:                           %s\n",  (deviceProps.kernelExecTimeoutEnabled ? "Yes" : "No"));
+  printf("--------------------------------------------------------------\n");
+}
+
+/*
+ * Find all CUDA supported devices & print their properties
+ */
+void printAllCudaDeviceProps(){
+  int deviceCount = getCudaDevicesCount();
+  printf("\nFound %d CUDA supported device(s)\n", deviceCount);
+
+  for (int deviceId = 0; deviceId < deviceCount; ++deviceId){
+    printCudaDeviceProps(deviceId);
+  }
 }
 
 void printDeviceMemory(){
@@ -34,26 +112,6 @@ void printDeviceMemory(){
 
 int main()
 {
-    // Number of CUDA devices
-    int devCount;
-
-    cudaGetDeviceCount(&devCount);
-    printf("CUDA Device Query...\n");
-    printf("There are %d CUDA devices.\n", devCount);
-
-    // Iterate through devices
-    for (int i = 0; i < devCount; ++i)
-    {
-        // Get device properties
-        printf("\nCUDA Device #%d\n", i);
-        cudaDeviceProp devProp;
-        cudaGetDeviceProperties(&devProp, i);
-        printDevProp(devProp);
-    }
-
-    printf("\nPress any key to exit...");
-    char c;
-    scanf("%c", &c);
-
+    printAllCudaDeviceProps();
     return 0;
 }
