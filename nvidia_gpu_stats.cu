@@ -25,11 +25,18 @@ void printDevProp(cudaDeviceProp devProp)
     return;
 }
 
+void printDeviceMemory(){
+  size_t mem_available, mem_free;
+  cudaMemGetInfo(&mem_free, &mem_available);
+  printf("Memory available (MB):             %f\n",  mem_available/(1024*1024.));
+  printf("Memory free (MB):             %f\n",  mem_free/(1024*1024.));
+}
+
 int main()
 {
     // Number of CUDA devices
     int devCount;
-    size_t mem_available, mem_free;
+
     cudaGetDeviceCount(&devCount);
     printf("CUDA Device Query...\n");
     printf("There are %d CUDA devices.\n", devCount);
@@ -42,10 +49,6 @@ int main()
         cudaDeviceProp devProp;
         cudaGetDeviceProperties(&devProp, i);
         printDevProp(devProp);
-        cudaMemGetInfo(&mem_free, &mem_available);
-        printf("Memory available (MB):             %f\n",  mem_available/(1024*1024.));
-        printf("Memory free (MB):             %f\n",  mem_free/(1024*1024.));
-
     }
 
     printf("\nPress any key to exit...");
