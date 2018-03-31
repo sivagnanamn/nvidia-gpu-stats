@@ -1,10 +1,24 @@
-# nvidia-gpu-stats (Work-in-progress)
-Simple CUDA script to check the usage of NVIDIA GPU
+# nvidia-gpu-stats
+Simple CUDA script to check the usage of NVIDIA GPU.
+- Query used & available memory of the CUDA supported devices (especially useful for MAC users without nvidia-smi support)
+- Query the CUDA supported device properties (like Global memory, Clock speed, Warp size etc.,)
 
 ```
+# Choose the appropriate arch according to your GPU device (scroll below to see other options)
 $ nvcc -arch=compute_61 -code=sm_61 nvidia_gpu_stats.cu -o nvidia_gpu_stats
-$ ./nvidia_gpu_stats
+$ ./nvidia_gpu_stats -mem
 ```
+
+#### Sample output
+```
+$ ./nvidia_gpu_stats -mem
+```
+![Alt text](./images/mem.png)
+
+```
+$ ./nvidia_gpu_stats -props
+```
+![Alt text](./images/props.png)
 
 Choose the appropriate arch according to your GPU
 ```
@@ -23,13 +37,3 @@ Choose the appropriate arch according to your GPU
 // Jetson Tx2 or Drive-PX2
 // -arch=compute_62 -code=[sm_62,compute_62]
 ```
-#### Sample output
-```
-$ ./nvidia_gpu_stats -mem
-```
-![Alt text](./images/mem.png)
-
-```
-$ ./nvidia_gpu_stats -props
-```
-![Alt text](./images/props.png)
