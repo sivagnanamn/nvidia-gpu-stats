@@ -6,10 +6,21 @@
 // ================================================================================================
 
 #include <stdio.h>
+#include <time.h>
 
 // CUDA C headers
 #include <cuda.h>
 #include <cuda_runtime.h>
+
+/*
+ *
+ */
+void printCurrentTime(){
+  time_t t = time(NULL);
+  struct tm tm = *localtime(&t);
+
+  printf("\n%d-%d-%d %d:%d:%d", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+}
 
 /*
  * Get number of CUDA supported devices available
@@ -96,6 +107,7 @@ void printCudaDeviceProps(int deviceId)
  */
 void printAllCudaDeviceProps(){
   int deviceCount = getCudaDevicesCount();
+  printCurrentTime();
   printf("\nFound %d CUDA supported device(s)\n", deviceCount);
 
   for (int deviceId = 0; deviceId < deviceCount; ++deviceId){
@@ -103,15 +115,45 @@ void printAllCudaDeviceProps(){
   }
 }
 
-void printDeviceMemory(){
+/*
+ * Print the free & used memory information of all NVIDIA CUDA supported devices
+ */
+void printNvidiaDevicesMemoryInfo(){
+
+  int driverVersion, runTimeVersion, deviceCount;
   size_t mem_available, mem_free;
-  cudaMemGetInfo(&mem_free, &mem_available);
-  printf("Memory available (MB):             %f\n",  mem_available/(1024*1024.));
-  printf("Memory free (MB):             %f\n",  mem_free/(1024*1024.));
+
+  cudaDriverGetVersion(&driverVersion);
+  cudaRuntimeGetVersion(&runTimeVersion);
+  deviceCount = getCudaDevicesCount();
+
+  printCurrentTime();
+  printf("\n+----------------------------------------------------------------------+\n");
+  printf("| CUDA Driver version: %d.%d               Runtime Version: %d.%d          |\n", driverVersion/1000, (driverVersion % 100)/10, runTimeVersion/1000, (runTimeVersion%100)/10);
+
+  for (int deviceId = 0; deviceId < deviceCount; ++deviceId){
+
+    cudaSetDevice(deviceId);
+    cudaDeviceProp deviceProps = getCudaDeviceProps(deviceId);
+    cudaMemGetInfo(&mem_free, &mem_available);
+    printf("+----------------------------------------------------------------------------------------+\n");
+    printf("| Device ID: %d      Name: %s           %.0f MB (free) / %.0f MB (total)    |\n", deviceId, deviceProps.name, (float)mem_free/(1024*1024.), (float)mem_available/(1024*1024.));
+    printf("+----------------------------------------------------------------------------------------+\n");
+
+  }
+
 }
 
-int main()
+int main(int argc, char *argv[])
 {
-    printAllCudaDeviceProps();
-    return 0;
+  if(argc < 2) {
+    printNvidiaDevicesMemoryInfo(); // Print memory information if not argument is passed
+  } else {
+    if (0 == strcmp(argv[1], "-mem")){
+      printNvidiaDevicesMemoryInfo();
+    } else if (0 == strcmp(argv[1], "-props")) {
+      printAllCudaDeviceProps();
+    }
+  }
+  return 0;
 }
